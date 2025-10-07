@@ -1,43 +1,43 @@
 #!/usr/bin/env python3
 """
-Simple test for mailmonitor - no fancy frameworks
+Production test for mail monitor
 """
 
-from mailmonitor import SimpleMailMonitor
+from mailmonitor import MailMonitor
 
 def test_threat_detection():
-    """Test basic threat detection"""
+    """Test production threat detection"""
     
-    monitor = SimpleMailMonitor("test@test.com", "test")
+    monitor = MailMonitor()
     
     # Test safe email
     safe_email = {
         'id': '1',
-        'from': 'friend@gmail.com', 
-        'subject': 'Meeting tomorrow',
-        'body': 'Hi, let\'s meet at the coffee shop tomorrow at 2pm.'
+        'from': 'colleague@company.com', 
+        'subject': 'Weekly meeting agenda',
+        'body': 'Please review the agenda for our weekly team meeting.'
     }
     
-    result = monitor.scan_email(safe_email)
+    result = monitor.analyze_threat(safe_email)
     assert result['action'] == 'ALLOW'
-    assert result['risk_score'] < 20
+    assert result['threat_score'] < 0.2
     print("✅ Safe email test passed")
     
-    # Test suspicious email
+    # Test high-threat email
     threat_email = {
         'id': '2',
-        'from': 'noreply@suspicious.tk',
-        'subject': 'URGENT: Verify your account now!',
-        'body': 'Click here immediately: http://evil.zip/verify or your account will be suspended!'
+        'from': 'security@paypaI.com',  # Typosquatting
+        'subject': 'URGENT: Account suspended - verify now!',
+        'body': 'Your account will be locked! Click here: https://192.168.1.1/verify?token=abc123 or send bitcoin payment to unlock.'
     }
     
-    result = monitor.scan_email(threat_email)
+    result = monitor.analyze_threat(threat_email)
     assert result['action'] in ['QUARANTINE', 'BLOCK']
-    assert result['risk_score'] >= 60
+    assert result['threat_score'] >= 0.5
     assert len(result['threats']) > 0
-    print("✅ Threat email test passed")
+    print("✅ High-threat email test passed")
     
-    print("\n🎉 All tests passed!")
+    print("🎉 Production tests passed!")
 
 if __name__ == "__main__":
     test_threat_detection()

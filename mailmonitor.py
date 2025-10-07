@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Simple Mail Monitor - Threat Detection for Gmail
-Keep it simple: scan emails, detect threats, take action
+Mail Monitor - Production Email Threat Detection
+Scans Gmail for threats and takes action
 """
 
 import imaplib
@@ -9,58 +9,77 @@ import email
 import re
 import json
 import sys
+import configparser
 from datetime import datetime
 from typing import List, Dict, Any
 
-class SimpleMailMonitor:
-    """Dead simple email threat monitor"""
+class MailMonitor:
+    """Production email threat monitor"""
     
-    def __init__(self, username: str, password: str):
-        self.username = username
-        self.password = password
+    def __init__(self, config_file: str = None):
+        if config_file:
+            self.load_config(config_file)
+        else:
+            self.username = None
+            self.password = None
+        
         self.mail = None
         
-        # Simple threat patterns - no fancy AI needed
-        self.bad_keywords = [
+        # Production threat patterns
+        self.threat_keywords = [
             'urgent', 'verify', 'suspended', 'click here', 'act now',
             'wire transfer', 'bitcoin', 'cryptocurrency', 'refund',
-            'update payment', 'confirm identity', 'security alert'
+            'update payment', 'confirm identity', 'security alert',
+            'account locked', 'verify now', 'limited time'
         ]
         
-        self.bad_domains = [
-            '.tk', '.ml', '.ga', '.cf', '.zip', '.mov', '.click'
+        self.malicious_domains = [
+            '.tk', '.ml', '.ga', '.cf', '.zip', '.mov', '.click',
+            '.top', '.download', '.work', '.surf'
         ]
         
-        self.suspicious_patterns = [
-            r'bit\.ly/\w+',           # Shortened URLs
+        self.threat_patterns = [
+            r'bit\.ly/\w+',           # URL shorteners
+            r'tinyurl\.com/\w+',
             r'\d+\.\d+\.\d+\.\d+',    # IP addresses
             r'[a-z0-9]+\.onion',      # Tor domains
             r'[hH][xX]{2}[pP]',       # Defanged URLs
+            r'[0-9a-f]{32,}',         # Potential hashes
         ]
     
+    def load_config(self, config_file: str):
+        """Load configuration from INI file"""
+        config = configparser.ConfigParser()
+        config.read(config_file)
+        
+        self.username = config.get('gmail', 'username')
+        self.password = config.get('gmail', 'password')
+        self.scan_limit = config.getint('monitoring', 'max_emails_per_scan', fallback=50)
+        self.quarantine_threshold = config.getfloat('thresholds', 'quarantine', fallback=0.7)
+        self.flag_threshold = config.getfloat('thresholds', 'flag', fallback=0.5)
+        self.block_threshold = config.getfloat('thresholds', 'block_sender', fallback=0.9)
+    
     def connect(self) -> bool:
-        """Connect to Gmail"""
+        """Connect to Gmail IMAP"""
         try:
             self.mail = imaplib.IMAP4_SSL('imap.gmail.com')
             self.mail.login(self.username, self.password)
             self.mail.select('inbox')
-            print(f"✅ Connected to {self.username}")
             return True
         except Exception as e:
-            print(f"❌ Connection failed: {e}")
+            print(f"Connection failed: {e}")
             return False
     
-    def get_emails(self, limit: int = 50) -> List[Dict]:
-        """Get recent emails"""
+    def get_recent_emails(self, limit: int = None) -> List[Dict]:
+        """Get recent emails from inbox"""
         if not self.mail:
             return []
         
+        limit = limit or getattr(self, 'scan_limit', 50)
+        
         try:
-            # Search for recent emails
             result, data = self.mail.search(None, 'ALL')
             email_ids = data[0].split()
-            
-            # Get the most recent ones
             recent_ids = email_ids[-limit:] if len(email_ids) > limit else email_ids
             
             emails = []
@@ -69,25 +88,22 @@ class SimpleMailMonitor:
                 raw_email = data[0][1]
                 email_message = email.message_from_bytes(raw_email)
                 
-                # Extract basic info
-                email_data = {
+                emails.append({
                     'id': email_id.decode(),
                     'from': email_message.get('From', ''),
                     'subject': email_message.get('Subject', ''),
                     'date': email_message.get('Date', ''),
-                    'body': self._get_body(email_message)
-                }
-                emails.append(email_data)
+                    'body': self._extract_body(email_message)
+                })
             
-            print(f"📧 Retrieved {len(emails)} emails")
             return emails
             
         except Exception as e:
-            print(f"❌ Error getting emails: {e}")
+            print(f"Error retrieving emails: {e}")
             return []
     
-    def _get_body(self, email_message) -> str:
-        """Extract email body text"""
+    def _extract_body(self, email_message) -> str:
+        """Extract text from email body"""
         body = ""
         
         if email_message.is_multipart():
@@ -105,146 +121,179 @@ class SimpleMailMonitor:
         
         return body
     
-    def scan_email(self, email_data: Dict) -> Dict[str, Any]:
-        """Scan single email for threats - keep it simple"""
+    def analyze_threat(self, email_data: Dict) -> Dict[str, Any]:
+        """Analyze email for threats - production logic"""
         
         subject = email_data.get('subject', '').lower()
         body = email_data.get('body', '').lower()
         sender = email_data.get('from', '').lower()
         
-        threats = []
-        risk_score = 0
+        threat_score = 0.0
+        threats_detected = []
         
-        # Check for bad keywords
-        for keyword in self.bad_keywords:
-            if keyword in subject or keyword in body:
-                threats.append(f"Suspicious keyword: {keyword}")
-                risk_score += 20
+        # Keyword analysis
+        for keyword in self.threat_keywords:
+            if keyword in subject:
+                threat_score += 0.15  # Subject keywords are more serious
+                threats_detected.append(f"Threat keyword in subject: {keyword}")
+            elif keyword in body:
+                threat_score += 0.08
+                threats_detected.append(f"Threat keyword in body: {keyword}")
         
-        # Check sender domain
-        for domain in self.bad_domains:
+        # Domain analysis
+        for domain in self.malicious_domains:
             if domain in sender:
-                threats.append(f"Suspicious domain: {domain}")
-                risk_score += 30
+                threat_score += 0.25
+                threats_detected.append(f"Malicious sender domain: {domain}")
+            if domain in body:
+                threat_score += 0.20
+                threats_detected.append(f"Malicious URL domain: {domain}")
         
-        # Check for suspicious patterns
-        text = subject + " " + body
-        for pattern in self.suspicious_patterns:
-            if re.search(pattern, text):
-                threats.append(f"Suspicious pattern: {pattern}")
-                risk_score += 25
+        # Pattern analysis
+        text = f"{subject} {body}"
+        for pattern in self.threat_patterns:
+            matches = re.findall(pattern, text)
+            if matches:
+                threat_score += 0.18 * len(matches)
+                threats_detected.append(f"Suspicious pattern: {pattern}")
         
-        # Simple URL check
-        urls = re.findall(r'https?://[^\s]+', body)
+        # URL analysis
+        urls = re.findall(r'https?://[^\s<>"{}|\\^`\[\]]+', body)
         for url in urls:
-            if any(bad in url for bad in self.bad_domains):
-                threats.append(f"Suspicious URL: {url[:50]}...")
-                risk_score += 40
+            if any(bad_domain in url for bad_domain in self.malicious_domains):
+                threat_score += 0.35
+                threats_detected.append(f"Malicious URL detected")
+            if re.match(r'.*\d+\.\d+\.\d+\.\d+.*', url):
+                threat_score += 0.25
+                threats_detected.append("URL uses IP address instead of domain")
         
-        # Determine action
-        if risk_score >= 80:
+        # Determine action based on thresholds
+        if threat_score >= getattr(self, 'block_threshold', 0.9):
             action = "BLOCK"
-        elif risk_score >= 60:
+        elif threat_score >= getattr(self, 'quarantine_threshold', 0.7):
             action = "QUARANTINE"
-        elif risk_score >= 40:
+        elif threat_score >= getattr(self, 'flag_threshold', 0.5):
             action = "FLAG"
-        elif risk_score >= 20:
+        elif threat_score >= 0.2:
             action = "MONITOR"
         else:
             action = "ALLOW"
         
         return {
             'email_id': email_data['id'],
-            'from': email_data['from'],
+            'sender': email_data['from'],
             'subject': email_data['subject'],
-            'risk_score': risk_score,
+            'threat_score': round(threat_score, 3),
             'action': action,
-            'threats': threats,
-            'scan_time': datetime.now().isoformat()
+            'threats': threats_detected,
+            'timestamp': datetime.now().isoformat()
         }
     
-    def scan_all(self, limit: int = 50) -> List[Dict]:
-        """Scan multiple emails"""
+    def scan_mailbox(self, limit: int = None) -> List[Dict]:
+        """Scan mailbox for threats"""
         
         if not self.connect():
             return []
         
-        emails = self.get_emails(limit)
-        results = []
+        emails = self.get_recent_emails(limit)
+        scan_results = []
         
-        print(f"\n🔍 Scanning {len(emails)} emails...")
-        
-        for i, email_data in enumerate(emails, 1):
-            result = self.scan_email(email_data)
-            results.append(result)
-            
-            # Simple progress
-            status = result['action']
-            score = result['risk_score']
-            print(f"{i:3d}. {status:10s} (Score: {score:2d}) - {result['subject'][:50]}")
+        for email_data in emails:
+            result = self.analyze_threat(email_data)
+            scan_results.append(result)
         
         self.mail.close()
-        return results
+        return scan_results
     
-    def save_results(self, results: List[Dict], filename: str = None):
-        """Save results to JSON"""
-        if not filename:
+    def save_scan_results(self, results: List[Dict], output_file: str = None):
+        """Save scan results to JSON file"""
+        
+        if not output_file:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            filename = f"scan_results_{timestamp}.json"
+            output_file = f"mail_scan_{timestamp}.json"
         
-        with open(filename, 'w') as f:
-            json.dump({
-                'scan_time': datetime.now().isoformat(),
-                'total_emails': len(results),
-                'results': results
-            }, f, indent=2)
+        scan_summary = {
+            'scan_timestamp': datetime.now().isoformat(),
+            'total_emails_scanned': len(results),
+            'threats_detected': len([r for r in results if r['threats']]),
+            'high_risk_emails': len([r for r in results if r['action'] in ['QUARANTINE', 'BLOCK']]),
+            'results': results
+        }
         
-        print(f"💾 Results saved to {filename}")
+        with open(output_file, 'w') as f:
+            json.dump(scan_summary, f, indent=2)
+        
+        return output_file
 
 
 def main():
-    """Simple command line interface"""
+    """Production command line interface"""
     
-    if len(sys.argv) < 3:
-        print("Usage: python mailmonitor.py <username> <password> [limit]")
-        print("Example: python mailmonitor.py user@gmail.com app_password 20")
-        return
+    if len(sys.argv) < 2:
+        print("Usage:")
+        print("  python mailmonitor.py <config_file> [email_limit]")
+        print("  python mailmonitor.py <username> <password> [email_limit]")
+        print("")
+        print("Examples:")
+        print("  python mailmonitor.py gmail_config.ini")
+        print("  python mailmonitor.py user@gmail.com app_password 100")
+        return 1
     
-    username = sys.argv[1]
-    password = sys.argv[2]
-    limit = int(sys.argv[3]) if len(sys.argv) > 3 else 50
+    # Initialize monitor
+    if len(sys.argv) >= 3 and '@' in sys.argv[1]:
+        # Direct credentials
+        monitor = MailMonitor()
+        monitor.username = sys.argv[1]
+        monitor.password = sys.argv[2]
+        limit = int(sys.argv[3]) if len(sys.argv) > 3 else 50
+    else:
+        # Config file
+        config_file = sys.argv[1]
+        monitor = MailMonitor(config_file)
+        limit = int(sys.argv[2]) if len(sys.argv) > 2 else None
     
-    print("📧 SIMPLE MAIL MONITOR")
-    print("=" * 50)
+    print("MAIL MONITOR - THREAT SCAN")
+    print("=" * 40)
     
-    monitor = SimpleMailMonitor(username, password)
-    results = monitor.scan_all(limit)
+    # Run scan
+    results = monitor.scan_mailbox(limit)
     
-    if results:
-        # Summary
-        print(f"\n📊 SCAN SUMMARY")
-        print("-" * 30)
-        
-        actions = {}
-        for result in results:
-            action = result['action']
-            actions[action] = actions.get(action, 0) + 1
-        
-        for action, count in actions.items():
-            print(f"{action:12s}: {count:3d} emails")
-        
-        # Save results
-        monitor.save_results(results)
-        
-        # Show threats
-        threats_found = [r for r in results if r['threats']]
-        if threats_found:
-            print(f"\n⚠️  THREATS DETECTED: {len(threats_found)}")
-            for result in threats_found:
-                print(f"- {result['subject'][:40]} (Score: {result['risk_score']})")
+    if not results:
+        print("No emails scanned or scan failed")
+        return 1
     
-    print("\n✅ Scan complete!")
+    # Analysis summary
+    total = len(results)
+    threats = [r for r in results if r['threats']]
+    high_risk = [r for r in results if r['action'] in ['QUARANTINE', 'BLOCK']]
+    
+    print(f"Emails scanned: {total}")
+    print(f"Threats detected: {len(threats)}")
+    print(f"High risk emails: {len(high_risk)}")
+    
+    # Action breakdown
+    actions = {}
+    for result in results:
+        action = result['action']
+        actions[action] = actions.get(action, 0) + 1
+    
+    print("\nAction Summary:")
+    for action, count in sorted(actions.items()):
+        print(f"  {action}: {count}")
+    
+    # Save results
+    output_file = monitor.save_scan_results(results)
+    print(f"\nResults saved: {output_file}")
+    
+    # Show critical threats
+    critical = [r for r in results if r['action'] == 'BLOCK']
+    if critical:
+        print(f"\nCRITICAL THREATS ({len(critical)}):")
+        for result in critical:
+            print(f"  {result['subject'][:60]} (Score: {result['threat_score']})")
+    
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
