@@ -1,0 +1,3 @@
+# Simple requirements - no bloat
+imaplib2>=2.45
+email-validator>=1.3.0
