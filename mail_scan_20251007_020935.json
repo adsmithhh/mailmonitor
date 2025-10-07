@@ -1,0 +1,102 @@
+{
+  "scan_timestamp": "2025-10-07T02:09:35.033076",
+  "total_emails_scanned": 10,
+  "threats_detected": 2,
+  "high_risk_emails": 1,
+  "results": [
+    {
+      "email_id": "43461",
+      "sender": "\"bdsmflirten.nl\" <info@bdsmflirten.nl>",
+      "subject": "Nieuwe notificatie van Bigbeautifull",
+      "threat_score": 0.0,
+      "action": "ALLOW",
+      "threats": [],
+      "timestamp": "2025-10-07T02:09:34.865905"
+    },
+    {
+      "email_id": "43462",
+      "sender": "Humble Bundle <contact@mailer.humblebundle.com>",
+      "subject": "Humble Bundle x Packt: Machine Learning Operations made easy",
+      "threat_score": 0.0,
+      "action": "ALLOW",
+      "threats": [],
+      "timestamp": "2025-10-07T02:09:34.894385"
+    },
+    {
+      "email_id": "43463",
+      "sender": "\"Anthropic, PBC\" <invoice+statements@mail.anthropic.com>",
+      "subject": "Your receipt from Anthropic, PBC #2063-5428-2991",
+      "threat_score": 0.0,
+      "action": "ALLOW",
+      "threats": [],
+      "timestamp": "2025-10-07T02:09:34.894385"
+    },
+    {
+      "email_id": "43464",
+      "sender": "\"Bloomberg\" <noreply@news.bloomberg.com>",
+      "subject": "Monster chip deal",
+      "threat_score": 0.9,
+      "action": "QUARANTINE",
+      "threats": [
+        "Suspicious pattern: [0-9a-f]{32,}"
+      ],
+      "timestamp": "2025-10-07T02:09:34.894385"
+    },
+    {
+      "email_id": "43465",
+      "sender": "\"bdsmflirten.nl\" <info@bdsmflirten.nl>",
+      "subject": "Nieuwe notificatie van Francisca9922",
+      "threat_score": 0.0,
+      "action": "ALLOW",
+      "threats": [],
+      "timestamp": "2025-10-07T02:09:34.894385"
+    },
+    {
+      "email_id": "43466",
+      "sender": "Humble Bundle <contact@mailer.humblebundle.com>",
+      "subject": "Add dynamic overlays and more to your photos",
+      "threat_score": 0.0,
+      "action": "ALLOW",
+      "threats": [],
+      "timestamp": "2025-10-07T02:09:34.925991"
+    },
+    {
+      "email_id": "43467",
+      "sender": "Futurism <futurism@mail.beehiiv.com>",
+      "subject": "Mystery space object apparently spotted in NASA image",
+      "threat_score": 0.0,
+      "action": "ALLOW",
+      "threats": [],
+      "timestamp": "2025-10-07T02:09:34.927008"
+    },
+    {
+      "email_id": "43468",
+      "sender": "CNN What Matters <whatmatters@newsletters.cnn.com>",
+      "subject": "Trump-appointed judge blocks troops in Portland",
+      "threat_score": 0.0,
+      "action": "ALLOW",
+      "threats": [],
+      "timestamp": "2025-10-07T02:09:34.928046"
+    },
+    {
+      "email_id": "43469",
+      "sender": "Nancy <marketing@hellonancy.com>",
+      "subject": "=?UTF-8?B?8J+rpg==?= Prime genot?! 64% Korting",
+      "threat_score": 0.36,
+      "action": "MONITOR",
+      "threats": [
+        "Suspicious pattern: [0-9a-f]{32,}"
+      ],
+      "timestamp": "2025-10-07T02:09:34.929037"
+    },
+    {
+      "email_id": "43470",
+      "sender": "Martin Peers <info@theinformation.com>",
+      "subject": "The Briefing: =?UTF-8?B?T3BlbkFJ4oCZcw==?= Superapp Potential",
+      "threat_score": 0.0,
+      "action": "ALLOW",
+      "threats": [],
+      "timestamp": "2025-10-07T02:09:34.929037"
+    }
+  ]
+}

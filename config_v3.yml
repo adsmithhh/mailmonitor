@@ -1,0 +1,62 @@
+# Mail Monitor v3 Configuration
+# Hybrid system supporting both offline analysis and live Gmail monitoring
+
+gmail:
+  username: adsmithhh64@gmail.com
+  password: plbjgumuqigzxlyf
+
+analyzers:
+  keyword:
+    enabled: true
+    weight: 0.25
+    keywords:
+      - urgent
+      - verify
+      - suspended
+      - click here
+      - act now
+      - wire transfer
+      - bitcoin
+      - cryptocurrency
+      - refund
+      - update payment
+      - confirm identity
+      - security alert
+      - account locked
+      - verify now
+      - limited time
+  
+  domain:
+    enabled: true
+    weight: 0.35
+    domains:
+      - .tk
+      - .ml
+      - .ga
+      - .cf
+      - .zip
+      - .mov
+      - .click
+      - .top
+      - .download
+    patterns:
+      - 'bit\.ly/\w+'
+      - 'tinyurl\.com/\w+'
+      - '\d+\.\d+\.\d+\.\d+'
+      - '[a-z0-9]+\.onion'
+      - '[hH][xX]{2}[pP]'
+      - '[0-9a-f]{32,}'
+  
+  threat_intel:
+    enabled: true
+    weight: 0.40
+
+thresholds:
+  monitor: 0.2
+  flag: 0.5
+  quarantine: 0.7
+  block: 0.9
+
+logging:
+  level: INFO
+  save_detailed: true
