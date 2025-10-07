@@ -19,9 +19,9 @@ try:
 except ImportError:
     GMAIL_API_AVAILABLE = False
 
-from mailmonitor_v3 import MailMonitorV3  # Import our existing hybrid system
+from mailmonitor_v3 import HybridMailMonitor  # Import our existing hybrid system
 
-class GmailApiMonitor(MailMonitorV3):
+class GmailApiMonitor(HybridMailMonitor):
     """Enhanced Mail Monitor using Gmail API"""
     
     # Gmail API scopes
@@ -144,8 +144,9 @@ class GmailApiMonitor(MailMonitorV3):
             emails = self.get_emails_api(limit or 50)
         else:
             print("📧 Using IMAP fallback...")
-            # Fall back to IMAP method
-            return super().scan_mailbox(limit)
+            # Fall back to IMAP method - need to use async properly
+            import asyncio
+            return asyncio.run(super().scan_emails(limit=limit))
         
         if not emails:
             return []
@@ -153,7 +154,9 @@ class GmailApiMonitor(MailMonitorV3):
         scan_results = []
         
         for email_data in emails:
-            result = self.analyze_threat(email_data)
+            # Use async analyze_email from parent class
+            import asyncio
+            result = asyncio.run(self.analyze_email(email_data))
             
             # Add API-specific features
             result['api_features'] = {
@@ -261,7 +264,7 @@ def main():
         print(f"API enhanced: {len(api_enhanced)}")
     
     # Save results
-    output_file = monitor.save_scan_results(results, "gmail_api_scan.json")
+    output_file = monitor.save_results(results, "gmail_api_scan.json")
     print(f"💾 Results saved: {output_file}")
     
     # Auto-action on high threats (if API available)
