@@ -1,314 +1,111 @@
-# 🔐 Mail Monitor - Advanced Gmail Threat Detection
+# Mail Monitor: Early Warning System for Risky Gmail Messages
 
-**Production-ready Gmail security monitoring with AI-powered threat analysis**
-
-[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
-[![Gmail API](https://img.shields.io/badge/Gmail-API-red.svg)](https://developers.google.com/gmail/api)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-
-## 🚀 Features
-
-- ✅ **Real Gmail Integration** - IMAP + Gmail API support
-- 🎯 **Multi-Factor Threat Scoring** - Weighted analysis across multiple dimensions
-- 🔍 **Keyword Detection** - Phishing, urgency, financial threat patterns
-- 🌐 **Domain Analysis** - Malicious TLDs, typosquatting, suspicious URLs
-- 🛡️ **Threat Intelligence** - Mock threat intel with real pattern matching
-- ⚖️ **Configurable Thresholds** - YAML-based scoring and action rules
-- 📊 **JSON Output** - Complete scan results with detailed analysis
-- 🔐 **OAuth2 Authentication** - Secure Gmail API access
-
-## 📊 Latest Scan Results
-
-```
-✅ Emails scanned: 10 (via Gmail API)
-🚨 Threats detected: 2
-⚠️ High risk: 0
-🔗 API enhanced: 10
-📋 Gmail labels: 20
-```
-
-**Detected Threats:**
-- Google security alert (Score: 0.05) - Legitimate, correctly allowed
-- Newsletter tracking (Score: 0.052) - Low risk, correctly allowed
-
-## 🛠️ Installation
-
-```bash
-# Clone repository
-git clone https://github.com/adsmithhh/mailmonitor.git
-cd mailmonitor
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Configure Gmail credentials (choose one)
-```
-
-## 🔧 Configuration
-
-### Option 1: Gmail IMAP (Quick Start)
-```yaml
-# config_v3.yml
-gmail:
-  username: your-email@gmail.com
-  password: your-app-password
-
-analyzers:
-  keyword:
-    enabled: true
-    weight: 0.25
-  domain:
-    enabled: true
-    weight: 0.35
-  threat_intel:
-    enabled: true
-    weight: 0.40
-
-thresholds:
-  monitor: 0.15
-  flag: 0.35
-  quarantine: 0.55
-  block: 0.75
-```
-
-### Option 2: Gmail API (Enhanced Features)
-1. Enable Gmail API in [Google Cloud Console](https://console.cloud.google.com/)
-2. Download OAuth credentials as `credentials.json`
-3. Add yourself as test user in OAuth consent screen
-4. Run with `--api` flag for enhanced features
-
-See [GMAIL_API_SETUP.md](GMAIL_API_SETUP.md) for detailed instructions.
-
-## 🚀 Usage
-
-### Basic IMAP Scan
-```bash
-# Scan 50 emails with YAML config
-python mailmonitor_v3.py config_v3.yml 50
-
-# Offline testing mode
-python mailmonitor_v3.py --offline
-```
-
-### Gmail API Enhanced Scan
-```bash
-# Scan with API features (labels, metadata)
-python gmail_api_monitor.py config_v3.yml --api 10
-
-# Falls back to IMAP if credentials.json missing
-python gmail_api_monitor.py config_v3.yml --api 20
-```
-
-### Legacy Production Version
-```bash
-# Original production scanner
-python mailmonitor.py gmail_config.ini 100
-```
-
-## 📈 Threat Scoring System
-
-### How It Works
-
-The system uses **weighted multi-factor analysis** to calculate threat scores:
-
-```
-Total Score = (Keyword × 0.25) + (Domain × 0.35) + (ThreatIntel × 0.40)
-```
-
-### Analysis Factors
-
-| Analyzer | Weight | Detects |
-|----------|--------|---------|
-| **Keyword** | 25% | Urgency words, financial terms, phishing phrases |
-| **Domain** | 35% | Malicious TLDs, typosquatting, suspicious URLs |
-| **Threat Intel** | 40% | Pattern matching, reputation analysis |
-
-### Action Thresholds
-
-| Score Range | Action | Description |
-|-------------|--------|-------------|
-| 0.00-0.15 | **ALLOW** | Safe email, no action needed |
-| 0.15-0.35 | **MONITOR** | Watch for patterns, log activity |
-| 0.35-0.55 | **FLAG** | Suspicious content, manual review |
-| 0.55-0.75 | **QUARANTINE** | High threat, isolate email |
-| 0.75-1.00 | **BLOCK** | Critical threat, block sender |
-
-### Example Scoring
-
-**Email:** "URGENT: Verify your bitcoin payment now!"
-
-```
-Keyword Analysis:
-  - "urgent" in subject: +0.20
-  - "verify" in subject: +0.20
-  - "bitcoin" in subject: +0.20
-  Score: 0.60 × 0.25 = 0.15
-
-Domain Analysis:
-  - Sender: phishing@evil.tk
-  - Malicious TLD (.tk): +0.30
-  Score: 0.30 × 0.35 = 0.11
-
-Threat Intel:
-  - Pattern match: "verify"
-  Score: 0.35 × 0.40 = 0.14
-
-Total Score: 0.15 + 0.11 + 0.14 = 0.40
-Action: FLAG
-```
-
-## 📁 Project Structure
-
-```
-mailmonitor/
-├── mailmonitor_v3.py          # Hybrid IMAP/offline system (17KB)
-├── gmail_api_monitor.py       # Gmail API enhanced version (10KB)
-├── mailmonitor.py             # Legacy production scanner (11KB)
-├── config_v3.yml              # Threat detection configuration
-├── gmail_config.ini           # Gmail IMAP credentials
-├── requirements.txt           # Python dependencies
-├── GMAIL_API_SETUP.md        # Complete API setup guide
-├── test_v3.py                # Comprehensive test suite
-├── PRODUCTION_SUMMARY.md     # Deployment notes
-└── REPOSITORY_SUMMARY.md     # Complete system overview
-```
-
-## 🧪 Testing
-
-```bash
-# Run comprehensive test suite
-python test_v3.py
-
-# Test offline mode with sample emails
-python mailmonitor_v3.py --offline
-
-# Test live Gmail connection
-python mailmonitor_v3.py config_v3.yml 5
-
-# Test Gmail API integration
-python gmail_api_monitor.py config_v3.yml --api 5
-```
-
-## 📊 Output Format
-
-### JSON Results
-```json
-{
-  "scan_timestamp": "2025-10-07T09:00:56.440841",
-  "total_emails": 10,
-  "threats_detected": 2,
-  "high_risk": 0,
-  "offline_mode": false,
-  "results": [
-    {
-      "email_id": "43480",
-      "sender": "Copilot <notifications@github.com>",
-      "subject": "Re: [adsmithhh/AIGYM] PR #1",
-      "total_score": 0.052,
-      "action": "ALLOW",
-      "threats": ["Suspicious pattern: [0-9a-f]{32,}"],
-      "analyzer_results": {
-        "keyword": {
-          "score": 0.0,
-          "confidence": 0.8,
-          "threats": [],
-          "details": {"keywords_found": 0}
-        },
-        "domain": {
-          "score": 0.15,
-          "confidence": 0.9,
-          "threats": ["Suspicious pattern: [0-9a-f]{32,}"],
-          "details": {"urls_found": 2, "patterns_matched": 1}
-        },
-        "threat_intel": {
-          "score": 0.0,
-          "confidence": 0.7,
-          "threats": [],
-          "details": {"mock_analysis": true}
-        }
-      },
-      "timestamp": "2025-10-07T09:00:56.440841"
-    }
-  ]
-}
-```
-
-## 🔒 Security Notes
-
-- ✅ **Credentials excluded**: `credentials.json` and `token.pickle` in `.gitignore`
-- ✅ **App passwords**: Use Gmail app passwords for IMAP (not main password)
-- ✅ **OAuth2 for API**: More secure than password-based auth
-- ✅ **Testing mode**: Gmail API restricted to approved test users
-- ⚠️ **Config files**: Never commit with real credentials
-
-## 🎯 Real-World Performance
-
-### Tested Against Live Gmail Account
-- **Account**: adsmithhh64@gmail.com
-- **Emails scanned**: 50+
-- **False positives**: 0%
-- **Legitimate threats caught**: 100%
-- **Performance**: <1s per email
-
-### Sample Detections
-
-| Email Type | Score | Action | Correct? |
-|------------|-------|--------|----------|
-| GitHub notification | 0.052 | ALLOW | ✅ Correct |
-| Google security alert | 0.05 | ALLOW | ✅ Correct |
-| Business newsletter | 0.052 | ALLOW | ✅ Correct |
-| Typosquatted phishing | 0.85 | BLOCK | ✅ Correct |
-
-## 🚀 Deployment
-
-### Production Ready
-- ✅ Real Gmail integration working
-- ✅ Comprehensive threat detection
-- ✅ Full test coverage
-- ✅ JSON output for automation
-- ✅ Configurable thresholds
-- ✅ No demo code
-
-### Recommended Setup
-```bash
-# 1. Clone and configure
-git clone https://github.com/adsmithhh/mailmonitor.git
-cd mailmonitor
-pip install -r requirements.txt
-
-# 2. Configure credentials
-cp gmail_config.ini.example gmail_config.ini
-# Edit with your credentials
-
-# 3. Test
-python test_v3.py
-
-# 4. Run
-python mailmonitor_v3.py config_v3.yml 50
-```
-
-## 🤝 Contributing
-
-Contributions welcome! This is a production system with:
-- ✅ Real Gmail integration (live tested)
-- ✅ Comprehensive threat detection algorithms
-- ✅ Full async/await support
-- ✅ Modular analyzer architecture
-- ✅ Complete test suite
-
-## 📄 License
-
-MIT License - Free for personal and commercial use
-
-## 🙏 Acknowledgments
-
-- **Google Gmail API** - Official API integration
-- **Python IMAP** - Email protocol support
-- **PyYAML** - Configuration management
-- **Google OAuth Libraries** - Secure authentication
+Mail Monitor is a research-oriented tool that keeps a close eye on a Gmail inbox and calls out messages that look suspicious. It blends automation with human judgment: the software scans each message, calculates a risk score, and explains why a message feels off. Analysts, policy teams, and investigators can use the results to triage their inbox, document threats, and learn how adversaries try to slip past defenses.
 
 ---
 
-**⭐ If you find this useful, please star the repository!**
+## Why this matters
 
-**Built with ❤️ for Gmail security**
+Email remains the easiest way for attackers to reach people. Phishing, fake invoices, and malware droppers all begin with a persuasive message. Mail Monitor turns raw email into structured intelligence:
+
+* **Surfaces risky patterns** – highlights unusual domains, urgent language, or known malicious indicators.
+* **Shows its work** – every score is backed by explanations and references so humans can review or override.
+* **Creates an audit trail** – outputs structured JSON files that can feed case notes, spreadsheets, or dashboards.
+
+The project started as a production prototype for a security team and has been generalized for broader research and policy analysis.
+
+---
+
+## What the system can do
+
+| Capability | What it means for you |
+| --- | --- |
+| Gmail connectivity | Connects through Gmail IMAP or the official Gmail API (with OAuth) to read messages securely. |
+| Multi-factor scoring | Combines several “mini-analysts” (keyword, domain reputation, threat intelligence checks) into a single confidence score from 0 (safe) to 1 (dangerous). |
+| Configurable policy | Thresholds for "monitor", "flag", "quarantine", and "block" can be tuned in a YAML file to match your appetite for false positives. |
+| Transparent reports | Produces JSON summaries that list the suspicious patterns found in each email. |
+| Offline mode | Ships with stored data so you can test analytic rules without touching a live inbox. |
+
+---
+
+## How it works (conceptual overview)
+
+1. **Ingest** – Mail Monitor connects to Gmail and pulls down a batch of messages (you choose the count).
+2. **Analyze** – Each analyzer module inspects the message:
+   * *Keyword analyzer* flags urgent phrases ("verify now", "wire transfer"), financial terminology, or phishing language.
+   * *Domain analyzer* inspects links and sender addresses for typosquatting, strange top-level domains, or random strings that often indicate tracking and malware links.
+   * *Threat intelligence analyzer* cross-references mock intelligence feeds (e.g., known bad senders, suspicious file hashes).
+3. **Score & classify** – A weighted formula (default weights: keyword 25%, domain 35%, threat intelligence 40%) produces a total score. The system maps that score to an action recommendation.
+4. **Explain** – For every email, the system records which analyzer raised concerns, what patterns matched, and how confident it is.
+
+This design makes it easy to add new analyzers or adjust weights without rewriting the rest of the tool.
+
+---
+
+## Getting started (for collaboration with technical staff)
+
+Mail Monitor is written in Python (3.8+) and expects collaborators to set up a virtual environment and install dependencies listed in `requirements.txt`. The headline steps are:
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
+
+To experiment without a live inbox, run the offline mode:
+
+```bash
+python mailmonitor_v3.py --offline
+```
+
+To connect to Gmail, a developer will need either:
+
+* An **app password** for IMAP access, configured in `config_v3.yml`, or
+* An **OAuth client** (via Google Cloud Console) saved as `credentials.json` for the Gmail API.
+
+Detailed technical setup guides live in:
+
+* [`GMAIL_API_SETUP.md`](GMAIL_API_SETUP.md) – step-by-step OAuth configuration.
+* [`PRODUCTION_SUMMARY.md`](PRODUCTION_SUMMARY.md) – notes from the original deployment.
+
+Policy teams can share these documents with their technical partners to operationalize the tool.
+
+---
+
+## Reading the results
+
+Running a scan produces a structured JSON report (`mail_scan_<timestamp>.json`). Each entry includes:
+
+* **Sender and subject** – for quick triage.
+* **Total score and recommended action** – ALLOW, MONITOR, FLAG, QUARANTINE, or BLOCK.
+* **Analyzer details** – why the tool reached its conclusion (e.g., “Suspicious pattern: [0-9a-f]{32,}” indicates a tracking hash).
+
+These reports are ready for:
+
+* Import into spreadsheets for incident tracking.
+* Feeding downstream analytics (e.g., frequency of typosquatted domains over time).
+* Briefing stakeholders on email threat trends.
+
+---
+
+## Responsible use & security notes
+
+* **Protect credentials** – never store personal Gmail passwords in the repository. Use app passwords or OAuth tokens kept outside version control.
+* **Respect privacy** – when scanning personal or sensitive inboxes, ensure compliance with your organization’s privacy policies.
+* **Iterate carefully** – adjust thresholds in small increments and review the explanations to understand why alerts fire.
+
+---
+
+## Project roadmap & contributions
+
+Mail Monitor already functions as a production-grade prototype. Future improvements we welcome contributions for include:
+
+* Plugging in real threat intelligence feeds.
+* Adding natural-language explanations for non-technical reviewers.
+* Building a lightweight dashboard to visualize scan history.
+
+If you are interested in collaborating, please open an issue or submit a pull request. The codebase is licensed under the permissive MIT License, making it suitable for academic, governmental, or commercial research initiatives.
+
+---
+
+**Mail Monitor helps teams learn faster from the threats that reach their inbox.**
